@@ -82,6 +82,11 @@
 	alter table "library"."barcodes"
 		add constraint unique_barcodes_value
 			unique("value");
+	-- FK
+	alter table "library"."barcodes"
+		add constraint fk_barcodes_repository_id
+			foreign key("repository_id")
+				references "library"."repository" ("id");
 	
 --entity "Библиография" as bibliography
 	--PK не предусмотрен
@@ -89,6 +94,14 @@
 	alter table "library"."bibliography"
 		alter column "repository_id" set not null,
 		alter column "authors_id" set not null;
+	-- FK
+	alter table "library"."bibliography"
+		add constraint fk_bibliography_repository_id
+			foreign key("repository_id")
+				references "library"."repository" ("id"),
+		add constraint fk_bibliography_authors_id
+			foreign key("authors_id")
+				references "library"."authors" ("id");
 	
 --entity "Жанры" as genres
 	-- добавляем PK
@@ -135,6 +148,7 @@
 		add constraint pk_pasports_id primary key(id);
 	--CHECK
 	--количество цифр в поле
+	
 --entity "Свидетельство о рождении" as certificates
 	-- добавляем PK
 	alter table "library"."certificates"
