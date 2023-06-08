@@ -1,0 +1,183 @@
+@startuml ERD
+!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
+!define foreign_key(x) <b><color:#aaaaaa><&key></color> x</b>
+!define column(x) <b><color:#efefef><&media-record></color> x</b>
+!define table(x) entity x << (T, white) >>
+
+title "Entity Relationship Diagram (ERD): LIBRARY (Библиотека)"
+left to right direction
+
+package "Учет библиотечного фонда" {
+    entity "Библиотечный фонд" as repository
+    entity "Вид переплета" as bindings
+    entity "Авторы" as authors
+    entity "Штрихкоды" as barcodes
+    entity "Библиография" as bibliography
+    entity "Жанры" as genres
+    entity "Издательства" as publishers
+
+    ' Сведения о приобретенных библиотекой книгах
+    ' одна строчка - одно издание
+    ' - которая может быть приобретена в нескольких экземплярах
+    table(repository) {
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(title): VARCHAR[300]             >>"Наименование"
+        column(instances): INTEGER              >>"Количество экземпляров"
+        column(isbn): INTEGER                   >>"isbn"
+        column(year): DATE                      >>"Год издания"
+        foreign_key(bindings_id): INTEGER       >>"Вид переплета"
+        foreign_key(publishers_id): INTEGER     >>"Издательство"
+        foreign_key(genres_id): INTEGER         >>"Жанр"
+    }
+
+    ' Типы переплетов
+    ' Для автоподстановки при заполнении поля переплеты
+    ' -также возможно типы переплетов поменяются в будущем (жесткий, мягкий, глянцевый, матовый, электронная книга)
+    table(bindings){
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(type): VARCHAR[10]               >>"Тип переплета"
+    }
+    ' сведения об авторах
+    table(authors){
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(fio): VARCHAR[50]                >>"ФИО"
+        column(country): VARCHAR[30]            >>"Страна рождения"
+    }
+    ' Таблица экземпляров книг
+    ' Одна строка - один физический экземпляр
+    table(barcodes){
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(value): INTEGER                  >>"Штрихкод"
+        foreign_key(repository_id)              >>"Публикация"
+    }
+
+    ' сведения о соавторах
+    ' таблица для определения:
+    ' - перечня авторов книги
+    ' - перечня книг в написании которых участвовал автор
+    table(bibliography){
+        foreign_key(repository_id): INTEGER     >>"Идентификатор издания"
+        foreign_key(authors_id): INTEGER        >>"Идентификатор автора"
+    }
+
+    ' Жанры
+    table(genres){
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(value): VARCHAR[30]              >>"Жанр"
+    }
+
+    table(publishers) {
+    primary_key( id ): SERIAL                 >>"Идентификатор"
+    column(name): VARCHAR[50]                 >>"Наименование"
+    column(address): VARCHAR[300]             >>"Адрес"
+    column(phone): INTEGER                    >>"Телефон"
+    column(contactname): VARCHAR[150]         >>"Контакты-имя"
+    }
+
+    repository }|--|| publishers : "publisher_id"
+    repository }|--|| genres : "genre_id"
+    repository }|--|| bindings : "binding_id"
+
+    barcodes }|--|| repository : "repository_id"
+
+    bibliography }|--|| repository : "repository_id"
+    bibliography }|--|| authors : "author_id"
+}
+
+package "Учет читателей" {
+    entity "Карточка читателя" as accounts
+    entity "Паспорт" as pasports
+    entity "Свидетельство о рождении" as certificates
+
+    ' Карточки читателей
+    table(accounts) {
+        primary_key(id): SERIAL                 >>"Идентификатор"
+        column(fname): VARCHAR[50]              >>"Имя"
+        column(sname): VARCHAR[50]              >>"Отчество"
+        column(lname): VARCHAR[50]              >>"Фамилия"
+    }
+
+    ' Взрослые
+    table(adults){
+        foreign_key(accounts_id)                >>"Аккаунт"
+        column(address): VARCHAR[300]           >>"Адрес"
+        column(phone): INTEGER                  >>"Телефон"
+        foreign_key(passport_id): INTEGER       >>"Пасспорт"
+    }
+
+    ' Паспорта
+    table(pasports){
+        primary_key( id ): SERIAL               >>"Идентификатор"
+        column(serial): INTEGER                 >>"Серия"
+        column(number): INTEGER                 >>"Номер"
+    }
+
+    ' Дети
+    table(children){
+        foreign_key(accounts_id)                >>"Аккаунт"
+        foreign_key(sertificate_id): INTEGER    >>"Сертификат"
+        foreign_key(adult_id)                   >>"Аккаунт родителя"
+    }
+
+    ' Свидетельства о рождении
+    table(certificates){
+        primary_key( id ): SERIAL               >>"Идентификатор"
+        column(serial): VARCHAR[10]             >>"Серия"
+        column(number): INTEGER                 >>"Номер"
+        column(date): DATE                      >>"Дата выдачи"
+    }
+
+}
+
+package "Учет движения книг" {
+    entity "Реестр операций" as activities
+    entity "Выдача книг" as book_out
+    entity "Возврат книг" as book_in
+    entity "Бронирование" as booking
+
+    ' Операции над книгами 
+    table(activities){
+        primary_key( id ): SERIAL               >>"Идентификатор"
+        column(date): DATE                      >>"Дата события"
+        foreign_key(account_id): INTEGER        >>"Карточка читателя"
+        foreign_key(barcode_id): INTEGER        >>"Объект события"
+    }
+
+    ' Выдача книг
+    table(book_out) {
+        foreign_key(activities_id): SERIAL    >>"Идентификатор транзакции"
+        column(plan_date): DATE                 >>"Ожидаемая дата возврата"
+    }
+
+    ' Возврат книг
+    table(book_in){
+        column(book_in_fact): DATE              >>"Фактическая дата возврата"
+        column(penalty): MONEY                  >>"Штраф"
+        column(late):INTEGER                    >>"Период задержки возврата книги"
+        foreign_key(activities_id): INTEGER     >>"Идентификатор события"
+    }
+
+
+    ' Бронирование книг
+    ' происходит по изданиям, чаще всего читателю не важно, какой переплет ему дадут
+    ' отметка о бронировании указывается во всех книгах издания
+    table(booking){
+        primary_key(id) : SERIAL                >>"Идентификатор"
+        foreign_key(activities_id): INTEGER     >>"Идентификатор события"
+    }
+}
+
+' Описание взаимосвязей
+accounts ||--|| adults : "account_id"
+adults ||--|| pasports : "pasport_id"
+
+accounts ||--|| children : "account_id \nadult_id"
+children ||--|| certificates : "sertificate_id"
+
+activities }|--|| barcodes : "barcode_id"
+activities }|--|| accounts : "account_id"
+activities ||--|| book_out : "activities_id"
+activities ||--|| book_in : "activities_id"
+activities ||--|| booking : "activities_id"
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml 
+title "Use-Case Diagram: LIBRARY (Библиотека)"
+left to right direction
+
+actor "Администратор библиотеки" as admin
+package "Учет книг в библиотечном фонде" as books{
+    usecase "Учет экземпляров книг"
+    usecase "Учет изданий"
+    usecase "Учет авторов"
+    usecase "..."
+}
+
+package "Учет аккаунтов" as accounts {
+    usecase "Учет взрослых"
+    usecase "Учет детей"
+}
+
+package "Учет операций над книгами" as activities{
+    usecase "Выдача книг"
+    usecase "Бронирование книг"
+    usecase "Возврат книг"
+}
+
+admin --> books
+admin --> accounts
+admin --> activities
+
+@enduml
