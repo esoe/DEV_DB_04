@@ -85,9 +85,11 @@ package "Учет библиотечного фонда" {
 }
 
 package "Учет читателей" {
-    entity "Карточка читателя" as accounts
-    entity "Паспорт" as pasports
-    entity "Свидетельство о рождении" as certificates
+    entity "Карточки читателей" as accounts
+    entity "Взрослые" as adults
+    entity "Паспорта" as pasports
+    entity "Дети" as children
+    entity "Свидетельства о рождении" as certificates
 
     ' Карточки читателей
     table(accounts) {
@@ -145,7 +147,7 @@ package "Учет движения книг" {
 
     ' Выдача книг
     table(book_out) {
-        foreign_key(activities_id): SERIAL    >>"Идентификатор транзакции"
+        foreign_key(activities_id): SERIAL    >>"Идентификатор события"
         column(plan_date): DATE                 >>"Ожидаемая дата возврата"
     }
 
